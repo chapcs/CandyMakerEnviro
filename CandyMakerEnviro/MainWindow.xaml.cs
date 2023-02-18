@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,6 +13,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using ICS;
+
 
 namespace CandyMakerEnviro
 {
@@ -29,13 +32,14 @@ namespace CandyMakerEnviro
 
 internal class TemperatureChecker
 {
-    public bool air = false;
     Maker maker = new Maker();
+    IsolationCoolingSystem isolation = new IsolationCoolingSystem();
+    TurbineController turbines = new TurbineController();
 
     /// <summary>
     /// If the nougat temperature exceeds 160C it's too hot
     /// </summary>
-    public static bool IsNougatTooHot()
+    public bool IsNougatTooHot()
     {
         int temp = maker.CheckNougatTemperature();
         if (temp > 160)
@@ -52,51 +56,66 @@ internal class TemperatureChecker
     /// </summary>
     public void DoCICSVentProcedure()
     {
-        TurbineController turbines = new TurbineController();
         turbines.CloseTripValve(2);
-        IsolationCoolingSystem.Fill();
-        IsolationCoolingSystem.Vent();
+        isolation.Fill();
+        isolation.Vent();
         maker.CheckAirSystem();
     }
     /// <summary>
-    /// This code runs every 3 minutes to check the temperature.
+    /// This code runs every 3 minutes (10sec) to check the temperature.
     /// If it exceeds 160c we need to vent the cooling system.
     /// </summary>
     public void ThreeMinuteCheck()
     {
         if (IsNougatTooHot() == true)
-        {
             DoCICSVentProcedure();
-        }
+        else
+            Console.WriteLine("Nougat is still below 160...");
     }
 }
 
 internal class TurbineController
 {
-
+    // method CloseTripValve with multiple valves 1-4 to close
+    public void CloseTripValve(int valve)
+    {
+        Console.WriteLine("Closing valve " + valve);
+    }
 }
 
 internal class IsolationCoolingSystem
 {
-
+    // two methods fill and vent that don't return anything
+    public void Fill()
+    {
+        Console.WriteLine("Filling Isolation Cooling System . . .");
+        Thread.Sleep(1000);
+    }
+    public void Vent()
+    {
+        Console.WriteLine("Venting Isolation Cooling System . . .");
+        Thread.Sleep(1000);
+    }
 }
 
 internal class Maker
 {
     TemperatureChecker tcheck = new TemperatureChecker();
-    int t = 165;// temp in C
+    Random random = new Random();
 
     public int CheckNougatTemperature()
     {
-        Console.WriteLine("Nougat temperature: " + t + " C");
-        return t;
+        int randomTemp = random.Next(155, 170 + 1);
+        Console.WriteLine("Nougat temperature: " + randomTemp + " C");
+        return randomTemp;
     }
     public void CheckAirSystem()
     {
+        bool air = random.Next(2) == 0;
         Console.WriteLine("Checking Air System . . .");
-        if (tcheck.air == true)
-        {
+        if (air == true)
             Console.WriteLine("Air Present in System");
-        }
+        else
+            Console.WriteLine("Pumping m3 Air into System");
     }
 }
